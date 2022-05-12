@@ -28,20 +28,21 @@ object TestApp extends {
     
     documents.count() = 100000000
     */
-    val documents: DataFrame = spark.table("documents").select("document_type", "created_at", "id")
+    val documents: DataFrame = spark.table("documents")
+      .select("document_type", "created_at", "id")
+
     val types: DataFrame = Seq(1, 2, 3, 4, 5).toDF("doc_type")
 
-    val docTypesCreatedBetweenJanAndApr2017: DataFrame = documents
-      .join(types, 'document_type === 'doc_type)
-      .where(substring('created_at, 1, 4) === "2017")
+    val docTypesCreatedBetweenJanAndApr2017: DataFrame = documents.
+      where(to_date(col("created_at")) >= "2017-01-01"
+      && to_date(col("created_at")) < "2017-05-01")
+      .join(types, 'document_type === 'doc_type, "left_semi")
       .groupBy('document_type)
-      .agg(min('created_at) as "min_created")
-      .where('min_created < "2017-05-01 00:00:00")
+      .agg(min('created_at) as "min_created").cache()
     
     val uniqueDocTypes = docTypesCreatedBetweenJanAndApr2017
       .select('document_type)
       .collect
-      .distinct
       .length
     
     println(s"Unique document types: $uniqueDocTypes")
