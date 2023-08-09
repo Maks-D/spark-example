@@ -1,5 +1,5 @@
 from pyspark.sql import SparkSession
-from pyspark.sql.functions import col, min
+from pyspark.sql.functions import *
 
 spark = SparkSession.builder.appName("Test").getOrCreate()
 
@@ -20,22 +20,24 @@ spark = SparkSession.builder.appName("Test").getOrCreate()
     documents.count() = 100000000
 """
 
-documents = spark.table("documents").select("document_type", "created_at")
+spark = SparkSession.builder.appName("Test").getOrCreate()
+
+documents = spark.table("documents").select("document_type", "created_at", "id")
 types = spark.createDataFrame([(1,), (2,), (3,), (4,), (5,)], ["doc_type"])
 
 docTypesCreatedBetweenJanAndApr2017 = documents \
     .join(types, documents.document_type == types.doc_type) \
-    .where(col("created_at")[0:4] == "2017") \
+    .where(substring(documents.created_at, 1, 4) == "2017") \
     .groupBy(documents.document_type) \
     .agg(min(documents.created_at).alias("min_created")) \
-    .where(col('min_created') < "2017-05-01 00:00:00") \
-    .cache()
+    .where(col('min_created') < "2017-05-01 00:00:00")
 
-uniqueDocTypes = docTypesCreatedBetweenJanAndApr2017.select('document_type').distinct().count()
+uniqueDocTypes = len(set(docTypesCreatedBetweenJanAndApr2017.select('document_type').collect()))
 
-print(f"Unique document types: {uniqueDocTypes}")
+print("Unique document types: {}".format(uniqueDocTypes))
 
 docTypesCreatedBetweenJanAndApr2017.write.parquet("some parquet path")
+
 """
 docTypesCreatedBetweenJanAndApr2017.explain
    
