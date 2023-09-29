@@ -1,7 +1,7 @@
 import org.apache.spark.sql.{DataFrame, SparkSession}
 import org.apache.spark.sql.functions._
 
-object TestApp extends {
+object TestApp {
 
   def main(args: Array[String]): Unit = {
 
