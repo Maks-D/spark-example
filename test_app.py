@@ -1,8 +1,6 @@
 from pyspark.sql import SparkSession
 from pyspark.sql.functions import *
 
-spark = SparkSession.builder.appName("Test").getOrCreate()
-
 """
       create table documents(
         created_at string,
